@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Adaptive Learning - Starter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: Arial, sans-serif; max-width:900px; margin:20px auto; padding:10px; }
+    textarea { width:100%; height:150px; }
+    .question { background:#f6f6f6; padding:10px; margin:8px 0; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <h1>Adaptive Learning - Starter</h1>
+  <p>Paste text and generate quick practice questions.</p>
+
+  <textarea id="text"></textarea><br/>
+  <label>Number of questions:</label>
+  <input id="n" type="number" value="5" min="1" max="20"/>
+  <button id="gen">Generate Quiz</button>
+
+  <h2>Quiz</h2>
+  <div id="quiz"></div>
+
+  <script>
+  const API = "http://127.0.0.1:8000";
+  document.getElementById('gen').onclick = async () => {
+    const text = document.getElementById('text').value.trim();
+    const n = parseInt(document.getElementById('n').value) || 5;
+    if(!text){ alert('Paste some text first'); return; }
+    const res = await fetch(API + '/generate_quiz', {
+      method:'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, n_questions: n })
+    });
+    const data = await res.json();
+    const qdiv = document.getElementById('quiz');
+    qdiv.innerHTML = '';
+    if(!data.quiz || data.quiz.length===0){
+      qdiv.innerHTML = '<p>No questions generated. Try more content.</p>';
+      return;
+    }
+    data.quiz.forEach((q,i)=>{
+      const el = document.createElement('div');
+      el.className = 'question';
+      el.innerHTML = <b>Q${i+1}.</b> ${q.question}<br/><br/> +
+                     q.options.map(o=><label><input type="radio" name="q${i}"/> ${o}</label><br/>).join('') +
+                     <p><i>Answer: ${q.answer}</i></p>;
+      qdiv.appendChild(el);
+    });
+  };
+  </script>
+</body>
+</html>
